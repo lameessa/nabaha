@@ -7,6 +7,8 @@ import json
 import datetime
 import signal
 import sys
+encoder = SentenceTransformer("asafaya/bert-base-arabic")
+clf = joblib.load("vishing_classifier.pkl")
 
 # === Configuration ===
 SAMPLE_RATE = 16000
