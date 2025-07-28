@@ -1,74 +1,51 @@
-import sounddevice as sd
-import numpy as np
 import whisper
-import threading
-import queue
 import json
 import datetime
-import signal
-import sys
+import joblib
+from sentence_transformers import SentenceTransformer
+import soundfile as sf
+import traceback
+import numpy as np
+
+# Load models once
+model = whisper.load_model("large")
 encoder = SentenceTransformer("asafaya/bert-base-arabic")
 clf = joblib.load("vishing_classifier.pkl")
 
-# === Configuration ===
-SAMPLE_RATE = 16000
-CHUNK_DURATION = 2  # seconds
-OUTPUT_FILE = "transcripts.json"
+def process_audio_file(file_path):
+    try:
+        # Load audio
+        audio_data, sr = sf.read(file_path, dtype='float32')
+        if sr != 16000:
+            raise ValueError("Sample rate must be 16kHz")
 
-# === Initialize Whisper Model ===
-model = whisper.load_model("large")  # You can use "small", "medium", "large" if needed
+        # Transcribe
+        result = model.transcribe(file_path, language='ar')
+        text = result["text"].strip()
 
-# === Shared resources ===
-audio_queue = queue.Queue()
-transcripts = []
+        if text.strip() == "":
+            return {"text": "", "prediction": "No speech detected."}
 
-# === Recording audio callback ===
-def audio_callback(indata, frames, time, status):
-    if status:
-        print("⚠️", status)
-    audio_queue.put(indata.copy())
+        # Encode transcript
+        features = encoder.encode([text])
 
-# === Transcription logic ===
-def transcribe_audio():
-    while True:
-        audio_chunk = audio_queue.get()
+        # Predict
+        preds = clf.predict(features)[0]              # Array of 0/1
+        probs = clf.predict_proba(features)           # List of arrays
+        max_index = int(np.argmax(preds))             # Which class got "1"
+        max_prob = float(np.max(probs[max_index]))    # Max confidence
 
-        # Flatten to 1D float32 array for Whisper
-        audio_data = audio_chunk.flatten().astype(np.float32)
+        labels = [
+            "رمز تحقق", "بنك", "تهديد", "رقم بطاقة",
+            "معلومات حساسة", "مكالمة عادية", "تخويف", "طلب تحويل"
+        ]
+        predicted_labels = [labels[i] for i, val in enumerate(preds) if val == 1]
 
-        try:
-            result = model.transcribe(audio_data, language='ar')
-            text = result["text"].strip()
-            if text:
-                print("📝", result["text"][::-1])
-                transcripts.append({
-                    "timestamp": datetime.datetime.now().isoformat(),
-                    "text": text
-                })
+        return {
+            "text": text,
+            "prediction": f"🔴 Detected: {', '.join(predicted_labels)}" if predicted_labels else "🟢 Normal Call",
+            "confidence": round(max_prob * 100, 2)
+        }
 
-                # Save to JSON
-                with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-                    json.dump(transcripts, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print("❌ Error during transcription:", e)
-
-# === Graceful shutdown handler ===
-def signal_handler(sig, frame):
-    print("\n👋 Exiting and saving transcripts...")
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(transcripts, f, ensure_ascii=False, indent=2)
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-# === Start recording ===
-def main():
-    print("🎤 Starting live Arabic transcription... Press Ctrl+C to stop.")
-    threading.Thread(target=transcribe_audio, daemon=True).start()
-
-    with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, callback=audio_callback,
-                        blocksize=int(SAMPLE_RATE * CHUNK_DURATION)):
-        signal.pause()
-
-if __name__ == "__main__":
-    main()
+    except Exception as e:
+        return {"error": traceback.format_exc()}
