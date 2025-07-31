@@ -5,36 +5,105 @@ from pydub import AudioSegment
 from pydub.utils import which
 import io
 
-# تأكد أن pydub يعرف مكان ffmpeg
+# Set ffmpeg path
 AudioSegment.converter = which("ffmpeg")
 
-st.title("🎙️ Record Your Call")
+# --- Initialize session state ---
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 
-# تسجيل الصوت
-audio = mic_recorder(start_prompt="Start Recording", stop_prompt="Stop", use_container_width=True)
+if "result" not in st.session_state:
+    st.session_state.result = None
 
-if audio:
-    try:
-        # محاولة تحويل الملف إلى AudioSegment
-        raw_audio = AudioSegment.from_file(io.BytesIO(audio["bytes"]), format="webm")
-    except:
-        raw_audio = AudioSegment.from_file(io.BytesIO(audio["bytes"]))  # خليه يحاول يكتشف الصيغة
+# --- Page: Home ---
+if st.session_state.page == "home":
+    st.title("📞 Vishing Detection App")
 
-    # تحويل الصيغة إلى wav (16000Hz + قناة واحدة mono)
-    raw_audio = raw_audio.set_frame_rate(16000).set_channels(1)
-    raw_audio.export("recorded.wav", format="wav")
+    st.markdown("### Choose an option:")
+    if st.button("📊 View Risk Assessment Table"):
+        st.session_state.page = "risk_table"
+        st.rerun()
 
-    st.success("✅ Saved as recorded.wav")
+    if st.button("🎙️ Record a Phone Call"):
+        st.session_state.page = "record"
+        st.rerun()
 
-    # تمرير الملف إلى النموذج
-    result = process_audio_file("recorded.wav")
+# --- Page: Risk Table ---
+elif st.session_state.page == "risk_table":
+    st.title("📊 Static Risk Assessment Table")
+    st.markdown("This is a sample table showing risk types and their descriptions.")
 
-    if "error" in result:
-        st.error("❌ Error: " + result["error"])
+    st.table({
+        "Risk Type": ["رمز تحقق", "بنك", "تهديد", "رقم بطاقة", "معلومات حساسة", "مكالمة عادية", "تخويف", "طلب تحويل"],
+        "Description": [
+            "طلب رمز تحقق أو OTP",
+            "ذكر اسم بنك أو مؤسسة مالية",
+            "وجود تهديد أو إنذار",
+            "طلب رقم بطاقة ائتمانية",
+            "طلب معلومات شخصية أو حساسة",
+            "مكالمة لا تحتوي على محتوى خطير",
+            "استخدام لغة تخويف أو تهديد",
+            "طلب تحويل مالي أو بنكي"
+        ]
+    })
+
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
+        st.rerun()
+
+# --- Page: Record ---
+elif st.session_state.page == "record":
+    st.title("🎙️ Record Your Phone Call")
+
+    audio = mic_recorder(start_prompt="Start Recording", stop_prompt="Stop", use_container_width=True)
+
+    if audio:
+        try:
+            raw_audio = AudioSegment.from_file(io.BytesIO(audio["bytes"]), format="webm")
+        except:
+            raw_audio = AudioSegment.from_file(io.BytesIO(audio["bytes"]))  # auto format
+
+        raw_audio = raw_audio.set_frame_rate(16000).set_channels(1)
+        raw_audio.export("recorded.wav", format="wav")
+
+        st.success("✅ Audio saved successfully!")
+
+        result = process_audio_file("recorded.wav")
+
+        if "error" in result:
+            st.error("❌ Error: " + result["error"])
+        else:
+            st.session_state.result = result
+
+            st.subheader("📝 Transcription:")
+            st.write(result["text"])
+
+            st.subheader("📊 Prediction:")
+            st.write(result["prediction"])
+            st.caption(f"Confidence: {result['confidence']}%")
+
+            if st.button("➡️ Go to Results"):
+                st.session_state.page = "results"
+                st.rerun()
+
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
+        st.rerun()
+
+# --- Page: Results ---
+elif st.session_state.page == "results":
+    st.title("📋 Call Risk Analysis Results")
+
+    if st.session_state.result:
+        st.write("### 📝 Transcription")
+        st.write(st.session_state.result["text"])
+
+        st.write("### 📊 Prediction")
+        st.write(st.session_state.result["prediction"])
+        st.caption(f"Confidence: {st.session_state.result['confidence']}%")
     else:
-        st.subheader("📝 Transcription:")
-        st.write(result["text"])
+        st.warning("No result available. Please record a call first.")
 
-        st.subheader("📊 Prediction:")
-        st.write(result["prediction"])
-        st.caption(f"Confidence: {result['confidence']}%")
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
+        st.rerun()
