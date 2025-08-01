@@ -4,6 +4,8 @@ from typing import Optional
 from main import process_audio_file  # Your updated model logic
 from pydub import AudioSegment
 import io
+import json  # ✅ You forgot this line!
+
 app = FastAPI()
 
 # Enable CORS for frontend testing (e.g., Lovable)
@@ -39,4 +41,8 @@ async def analyze_audio(
         print("✅ Received audio file")
         print("🪙 Weights:", label_weights)
 
-    return result
+        return result  # ✅ Properly indented under `try`
+
+    except Exception as e:
+        return {"error": str(e)}  # ✅ Add this to catch runtime errors
+
