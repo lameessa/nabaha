@@ -12,7 +12,7 @@ model = whisper.load_model("large")
 encoder = SentenceTransformer("asafaya/bert-base-arabic")
 clf = joblib.load("vishing_classifier.pkl")
 
-def process_audio_file(file_path):
+def process_audio_file(file_path, label_weights=None):
     try:
         # Load audio
         audio_data, sr = sf.read(file_path, dtype='float32')
