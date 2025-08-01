@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from main import process_audio_file
@@ -12,22 +11,6 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # You can restrict this to your frontend URL later
-=======
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
-from main import process_audio_file  # Your updated model logic
-from pydub import AudioSegment
-import io
-import json  # ✅ You forgot this line!
-
-app = FastAPI()
-
-# Enable CORS for frontend testing (e.g., Lovable)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Later, restrict to frontend origin
->>>>>>> 959b12203e61c1b804bfbeba8829a82d27639536
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,7 +20,6 @@ app.add_middleware(
 def root():
     return {"message": "Nabaha API is running!"}
 
-<<<<<<< HEAD
 @app.post("/analyze-audio")
 async def analyze_audio(audio: UploadFile = File(...)):  # Accept "audio" instead of "file"
     try:
@@ -70,30 +52,3 @@ async def analyze_audio(audio: UploadFile = File(...)):  # Accept "audio" instea
 
     except Exception as e:
         return {"status": "error", "details": str(e)}
-=======
-@app.post("/analyze")
-async def analyze_audio(
-    file: UploadFile = File(...),
-    weights: Optional[str] = Form(None)  # weights sent as JSON string from frontend
-):
-    try:
-        # Read and preprocess the uploaded audio file
-        contents = await file.read()
-        audio = AudioSegment.from_file(io.BytesIO(contents))
-        audio = audio.set_frame_rate(16000).set_channels(1)
-        audio.export("uploaded.wav", format="wav")
-
-        # Parse weights JSON string if provided
-        label_weights = json.loads(weights) if weights else None
-
-        # Run prediction
-        result = process_audio_file("uploaded.wav", label_weights)
-        print("✅ Received audio file")
-        print("🪙 Weights:", label_weights)
-
-        return result  # ✅ Properly indented under `try`
-
-    except Exception as e:
-        return {"error": str(e)}  # ✅ Add this to catch runtime errors
-
->>>>>>> 959b12203e61c1b804bfbeba8829a82d27639536
