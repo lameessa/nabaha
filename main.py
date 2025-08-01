@@ -4,9 +4,10 @@ import traceback
 import numpy as np
 import soundfile as sf
 import re
+import whisper
 
 # Load models once
-model = whisperx.load_model("large", device="cpu")
+model = whisper.load_model("large")
 clf = joblib.load("vishing_classifier.pkl")
 
 FEATURE_NAMES = [
