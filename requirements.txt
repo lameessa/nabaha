@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+pydub
+python-multipart
+pydantic
+joblib
+numpy
+scikit-learn
+soundfile
+whisper
+sentence-transformers
+torch
+librosa
+ffmpeg-python
