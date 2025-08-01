@@ -1,11 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
-from main import process_audio_file, process_text_message
-from pydub import AudioSegment
 from pydantic import BaseModel
-import io
-import json
+from main import process_text_message
 
 app = FastAPI()
 
@@ -20,35 +16,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message": "Nabaha API is running!"}
-
-@app.post("/analyze")
-async def analyze_audio(
-    file: UploadFile = File(...),
-    weights: Optional[str] = Form(None)  # Weights sent as JSON string from frontend
-):
-    try:
-        # Read and preprocess the uploaded audio file
-        contents = await file.read()
-        audio = AudioSegment.from_file(io.BytesIO(contents))
-        audio = audio.set_frame_rate(16000).set_channels(1)
-        audio.export("uploaded.wav", format="wav")
-
-        # Parse weights JSON string if provided
-        try:
-            label_weights = json.loads(weights) if weights else None
-        except json.JSONDecodeError:
-            label_weights = None
-
-        # Run prediction
-        result = process_audio_file("uploaded.wav", label_weights)
-        print("✅ Received audio file")
-        print("🪙 Weights:", label_weights)
-
-        return result
-
-    except Exception as e:
-        return {"error": str(e)}
+    return {"message": "Nabaha API (text only) is running!"}
 
 class TextInput(BaseModel):
     message: str

@@ -1,14 +1,8 @@
 fastapi
 uvicorn[standard]
-pydub
-python-multipart
 pydantic
 joblib
 numpy
 scikit-learn
-soundfile
-openai-whisper @ git+https://github.com/openai/whisper.git
 sentence-transformers
 torch
-librosa
-ffmpeg-python
