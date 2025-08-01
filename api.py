@@ -16,11 +16,10 @@ app.add_middleware(
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
-from main import process_audio_file, process_text_message
+from main import process_audio_file  # Your updated model logic
 from pydub import AudioSegment
-from pydantic import BaseModel
 import io
-import json
+import json  # ✅ You forgot this line!
 
 app = FastAPI()
 
@@ -28,6 +27,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Later, restrict to frontend origin
+>>>>>>> 959b12203e61c1b804bfbeba8829a82d27639536
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,7 +74,7 @@ async def analyze_audio(audio: UploadFile = File(...)):  # Accept "audio" instea
 @app.post("/analyze")
 async def analyze_audio(
     file: UploadFile = File(...),
-    weights: Optional[str] = Form(None)  # Weights sent as JSON string from frontend
+    weights: Optional[str] = Form(None)  # weights sent as JSON string from frontend
 ):
     try:
         # Read and preprocess the uploaded audio file
@@ -84,21 +84,16 @@ async def analyze_audio(
         audio.export("uploaded.wav", format="wav")
 
         # Parse weights JSON string if provided
-        try:
-            label_weights = json.loads(weights) if weights else None
-        except json.JSONDecodeError:
-            label_weights = None
+        label_weights = json.loads(weights) if weights else None
 
         # Run prediction
         result = process_audio_file("uploaded.wav", label_weights)
         print("✅ Received audio file")
         print("🪙 Weights:", label_weights)
 
-        return result
+        return result  # ✅ Properly indented under `try`
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e)}  # ✅ Add this to catch runtime errors
 
-class TextInput(BaseModel):
-    message: str
-
+>>>>>>> 959b12203e61c1b804bfbeba8829a82d27639536

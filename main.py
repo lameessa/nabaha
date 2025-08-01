@@ -1,4 +1,11 @@
+<<<<<<< HEAD
+from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
+from linkapi import check_link_safety
+import whisper
+=======
 import whisperx
+>>>>>>> 959b12203e61c1b804bfbeba8829a82d27639536
 import joblib
 import traceback
 import numpy as np
@@ -40,13 +47,11 @@ async def analyze_audio(audio: UploadFile = File(...)):
         audio_data, sr = sf.read(audio.filename, dtype='float32')
 =======
 import re
-from sentence_transformers import SentenceTransformer  # ✅ Added
-import os
+import whisper
 
 # Load models once
 model = whisper.load_model("large")
 clf = joblib.load("vishing_classifier.pkl")
-encoder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")  # ✅ Replace with your actual model name
 
 FEATURE_NAMES = [
     "request_passwords",
@@ -133,7 +138,6 @@ def process_audio_file(file_path, label_weights=None):
 
         # Step 7: Fraud level
         level = "High" if fraud_score >= 0.85 else "Medium" if fraud_score >= 0.5 else "Low"
-
         print("📜 Transcript:", text)
         print("🧩 Features:", features_dict)
         print("🔮 Model preds:", preds)
@@ -182,3 +186,4 @@ def process_text_message(text):
 =======
     except Exception as e:
         return {"error": traceback.format_exc()}
+>>>>>>> 959b12203e61c1b804bfbeba8829a82d27639536
