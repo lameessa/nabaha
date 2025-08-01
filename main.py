@@ -1,73 +1,32 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from linkapi import check_link_safety
-import whisper
+import json
 import joblib
-import traceback
-import numpy as np
-import soundfile as sf
-import librosa
 from sentence_transformers import SentenceTransformer
+import numpy as np
+import traceback
 
-# Load models once
-model = whisper.load_model("tiny")
+# Load models
 encoder = SentenceTransformer("asafaya/bert-base-arabic")
-print("✅ SentenceTransformer loaded!")
-
-print("🔄 Loading classifier...")
 clf = joblib.load("vishing_classifier.pkl")
-print("✅ Classifier loaded!")
 
-# =====================
-# Link Scan Endpoint
-# =====================
-class LinkRequest(BaseModel):
-    url: str
-
-@app.post("/check_link")
-def check_link(data: LinkRequest):
-    return check_link_safety(data.url)
-
-# =====================
-# Audio Scan Endpoint
-# =====================
-@app.post("/analyze")
-async def analyze_audio(audio: UploadFile = File(...)):
+def process_text_message(text):
     try:
-        # Save uploaded file
-        file_path = audio.filename
-        with open(file_path, "wb") as buffer:
-            buffer.write(await audio.read())
-
-        # Read & resample
-        audio_data, sr = sf.read(file_path, dtype='float32')
-        if sr != 16000:
-            audio_data = librosa.resample(audio_data, orig_sr=sr, target_sr=16000)
-            sf.write(file_path, audio_data, 16000)
-
-        # Transcribe using preloaded Whisper
-        result = whisper_model.transcribe(file_path, language='ar')
-        text = result.get("text", "").strip()
-        if not text:
-            return {"text": "", "prediction": "No speech detected", "confidence": 0}
-
-        # Encode & classify
         features = encoder.encode([text])
         preds = clf.predict(features)[0]
-        probs = clf.predict_proba(features)[0]
-        confidence = round(float(np.max(probs)) * 100, 2)
+        probs = clf.predict_proba(features)
+        max_index = int(np.argmax(preds))
+        max_prob = float(np.max(probs[max_index]))
 
         labels = [
             "رمز تحقق", "بنك", "تهديد", "رقم بطاقة",
             "معلومات حساسة", "مكالمة عادية", "تخويف", "طلب تحويل"
         ]
-        detected = [labels[i] for i, val in enumerate(preds) if val == 1]
-        prediction = (
-            f"🔴 Detected: {', '.join(detected)}" if detected else "🟢 Normal Call"
-        )
+        predicted_labels = [labels[i] for i, val in enumerate(preds) if val == 1]
 
-        return {"text": text, "prediction": prediction, "confidence": confidence}
+        return {
+            "text": text,
+            "prediction": f"🔴 Detected: {', '.join(predicted_labels)}" if predicted_labels else "🟢 Normal Call",
+            "confidence": round(max_prob * 100, 2)
+        }
 
-    except Exception:
+    except Exception as e:
         return {"error": traceback.format_exc()}
