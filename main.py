@@ -1,51 +1,93 @@
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from linkapi import check_link_safety
 import whisper
-import json
-import datetime
 import joblib
-from sentence_transformers import SentenceTransformer
-import soundfile as sf
 import traceback
 import numpy as np
+import soundfile as sf
+import librosa
+from sentence_transformers import SentenceTransformer
 
-# Load models once
-model = whisper.load_model("large")
+# =====================
+# FastAPI app
+# =====================
+app = FastAPI()
+
+# Enable CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change to your frontend URL if you want more security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =====================
+# Load models ONCE at startup
+# =====================
+print("🔄 Loading Whisper model...")
+whisper_model = whisper.load_model("tiny")  # Change to "base" if you want better accuracy
+print("✅ Whisper model loaded!")
+
+print("🔄 Loading SentenceTransformer...")
 encoder = SentenceTransformer("asafaya/bert-base-arabic")
-clf = joblib.load("vishing_classifier.pkl")
+print("✅ SentenceTransformer loaded!")
 
-def process_audio_file(file_path, label_weights=None):
+print("🔄 Loading classifier...")
+clf = joblib.load("vishing_classifier.pkl")
+print("✅ Classifier loaded!")
+
+# =====================
+# Link Scan Endpoint
+# =====================
+class LinkRequest(BaseModel):
+    url: str
+
+@app.post("/check_link")
+def check_link(data: LinkRequest):
+    return check_link_safety(data.url)
+
+# =====================
+# Audio Scan Endpoint
+# =====================
+@app.post("/analyze")
+async def analyze_audio(audio: UploadFile = File(...)):
     try:
-        # Load audio
+        # Save uploaded file
+        file_path = audio.filename
+        with open(file_path, "wb") as buffer:
+            buffer.write(await audio.read())
+
+        # Read & resample
         audio_data, sr = sf.read(file_path, dtype='float32')
         if sr != 16000:
-            raise ValueError("Sample rate must be 16kHz")
+            audio_data = librosa.resample(audio_data, orig_sr=sr, target_sr=16000)
+            sf.write(file_path, audio_data, 16000)
 
-        # Transcribe
-        result = model.transcribe(file_path, language='ar')
-        text = result["text"].strip()
+        # Transcribe using preloaded Whisper
+        result = whisper_model.transcribe(file_path, language='ar')
+        text = result.get("text", "").strip()
+        if not text:
+            return {"text": "", "prediction": "No speech detected", "confidence": 0}
 
-        if text.strip() == "":
-            return {"text": "", "prediction": "No speech detected."}
-
-        # Encode transcript
+        # Encode & classify
         features = encoder.encode([text])
-
-        # Predict
-        preds = clf.predict(features)[0]              # Array of 0/1
-        probs = clf.predict_proba(features)           # List of arrays
-        max_index = int(np.argmax(preds))             # Which class got "1"
-        max_prob = float(np.max(probs[max_index]))    # Max confidence
+        preds = clf.predict(features)[0]
+        probs = clf.predict_proba(features)[0]
+        confidence = round(float(np.max(probs)) * 100, 2)
 
         labels = [
             "رمز تحقق", "بنك", "تهديد", "رقم بطاقة",
             "معلومات حساسة", "مكالمة عادية", "تخويف", "طلب تحويل"
         ]
-        predicted_labels = [labels[i] for i, val in enumerate(preds) if val == 1]
+        detected = [labels[i] for i, val in enumerate(preds) if val == 1]
+        prediction = (
+            f"🔴 Detected: {', '.join(detected)}" if detected else "🟢 Normal Call"
+        )
 
-        return {
-            "text": text,
-            "prediction": f"🔴 Detected: {', '.join(predicted_labels)}" if predicted_labels else "🟢 Normal Call",
-            "confidence": round(max_prob * 100, 2)
-        }
+        return {"text": text, "prediction": prediction, "confidence": confidence}
 
-    except Exception as e:
+    except Exception:
         return {"error": traceback.format_exc()}
