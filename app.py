@@ -2,16 +2,11 @@ import streamlit as st
 from streamlit_mic_recorder import mic_recorder
 from main import process_audio_file
 from pydub import AudioSegment
+from pydub.utils import which
 import io
-import os
 
-# ✅ Force ffmpeg path for pydub (set only ONCE and early)
-ffmpeg_path = r"C:\ffmpeg\bin\ffmpeg.exe"
-if not os.path.exists(ffmpeg_path):
-    raise FileNotFoundError(f"ffmpeg not found at: {ffmpeg_path}")
-
-AudioSegment.converter = ffmpeg_path
-
+# Set ffmpeg path
+AudioSegment.converter = which("ffmpeg")
 
 # --- Initialize session state ---
 if "page" not in st.session_state:

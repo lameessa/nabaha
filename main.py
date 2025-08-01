@@ -1,61 +1,39 @@
-from fastapi import FastAPI, UploadFile, File
-from pydantic import BaseModel
-from linkapi import check_link_safety
 import whisper
+import json
+import datetime
 import joblib
+from sentence_transformers import SentenceTransformer
+import soundfile as sf
 import traceback
 import numpy as np
-import soundfile as sf
-import librosa
-from sentence_transformers import SentenceTransformer
 
-# ✅ Create FastAPI app
-app = FastAPI()
+# Load models once
+model = whisper.load_model("large")
+encoder = SentenceTransformer("asafaya/bert-base-arabic")
+clf = joblib.load("vishing_classifier.pkl")
 
-# =====================
-# Link Scan Endpoint
-# =====================
-class LinkRequest(BaseModel):
-    url: str
-
-@app.post("/check_link")
-def check_link(data: LinkRequest):
-    return check_link_safety(data.url)
-
-# =====================
-# Audio Scan Endpoint
-# =====================
-# Lazy-load models for faster startup
-@app.post("/analyze-audio")
-async def analyze_audio(audio: UploadFile = File(...)):
+def process_audio_file(file_path):
     try:
-        # Load models when needed
-        model = whisper.load_model("tiny")
-        encoder = SentenceTransformer("asafaya/bert-base-arabic")
-        clf = joblib.load("vishing_classifier.pkl")
-
-        # Save uploaded file
-        with open(audio.filename, "wb") as buffer:
-            buffer.write(await audio.read())
-
-        # Read & resample
-        audio_data, sr = sf.read(audio.filename, dtype='float32')
+        # Load audio
+        audio_data, sr = sf.read(file_path, dtype='float32')
         if sr != 16000:
-            audio_data = librosa.resample(audio_data, orig_sr=sr, target_sr=16000)
-            sf.write(audio.filename, audio_data, 16000)
+            raise ValueError("Sample rate must be 16kHz")
 
         # Transcribe
-        result = model.transcribe(audio.filename, language='ar')
+        result = model.transcribe(file_path, language='ar')
         text = result["text"].strip()
 
-        if not text:
-            return {"text": "", "prediction": "No speech detected", "confidence": 0}
+        if text.strip() == "":
+            return {"text": "", "prediction": "No speech detected."}
 
-        # Encode & classify
+        # Encode transcript
         features = encoder.encode([text])
-        preds = clf.predict(features)[0]
-        probs = clf.predict_proba(features)
-        max_prob = float(np.max(probs))
+
+        # Predict
+        preds = clf.predict(features)[0]              # Array of 0/1
+        probs = clf.predict_proba(features)           # List of arrays
+        max_index = int(np.argmax(preds))             # Which class got "1"
+        max_prob = float(np.max(probs[max_index]))    # Max confidence
 
         labels = [
             "رمز تحقق", "بنك", "تهديد", "رقم بطاقة",
@@ -69,5 +47,5 @@ async def analyze_audio(audio: UploadFile = File(...)):
             "confidence": round(max_prob * 100, 2)
         }
 
-    except Exception:
+    except Exception as e:
         return {"error": traceback.format_exc()}
