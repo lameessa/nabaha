@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-joblib
-whisper
-pydub
-soundfile
-numpy
-scikit-learn==1.7.1
-sentence-transformers
