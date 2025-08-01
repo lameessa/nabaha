@@ -1,8 +1,7 @@
 fastapi
 uvicorn
 joblib
-whisper
-pydub
+whisperxpydub
 soundfile
 numpy
 scikit-learn==1.7.1
