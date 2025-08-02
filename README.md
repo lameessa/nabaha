@@ -1,20 +1,16 @@
-#Vishing Detection Project - Nabaha
+# Vishing Detection Project - Nabaha
 
-This project is designed to detect vishing (voice phishing). The goal of the system is to raise awareness about fraudulent phone calls and demonstrate how artificial intelligence can be applied in cybersecurity.
-
+This project is designed to detect vishing. The goal of the system is to raise awareness about fraudulent phone calls and demonstrate how artificial intelligence can be applied in cybersecurity.
 The system takes in a spoken or written message and analyzes it to determine whether it is a legitimate call or a vishing attempt. The message is processed using natural language understanding tools and classified using a trained machine learning model.
 
-##The project consists of three main files
-
-###vishing_dataset.csv
+## The project consists of three main files
+### vishing_dataset.csv
 This file contains a labeled dataset of Arabic phone call transcripts. Each row represents a single message or call transcript. The dataset includes features that indicate the presence of suspicious patterns, such as:
 - Requesting a password or code
 - Asking for personal or banking information
 - Using threats or urgency
 - Offering fake deals or money transfers
-
 These labels help the model learn how vishing calls typically behave.
-
 ### vishing_classifier.pkl
 This is a machine learning model that was trained using the vishing_dataset.csv file. It takes in Arabic messages (text) and predicts whether certain suspicious features are present. The model uses sentence embeddings from an Arabic BERT model to understand the meaning of the message.
 
