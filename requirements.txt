@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-pydantic
-joblib
-numpy
-scikit-learn
-sentence-transformers
-torch
