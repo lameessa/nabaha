@@ -56,11 +56,11 @@ This output can be used to decide if the message is safe or potentially dangerou
 
 ## Setup notes
 
-- The notebook requires Google Colab to run and needs a few files to be uploaded:
-  - vishing_classifier.pkl
-  - vishing_dataset.csv
-- You must also provide your ngrok token to generate the public API link
-- The system runs in real-time and is accessible from the browser or other tools once ngrok is connected
+- Run the notebook on Google Colab.
+- Upload vishing_classifier.pkl before starting.
+- Ngrok token is already provided.
+- After running, copy the ngrok API link shown in the output.
+- Paste that link in Lovable (only 5 edits allowed per day).
 
 ## Final thoughts
 
