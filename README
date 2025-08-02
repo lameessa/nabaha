@@ -1,0 +1,76 @@
+Vishing Detection Project - Nabaha
+
+This project is designed to detect vishing. The system was developed to raise awareness about fraud and show how artificial intelligence can be used in cybersecurity.
+
+The project consists of three main files:
+
+vishing_dataset.csv
+This is a dataset containing Arabic call transcripts. Each row is labeled with features that indicate whether the message is suspicious. These features include things like asking for a password, creating urgency, or threatening the person. The dataset is used to train the machine learning model.
+
+vishing_classifier.pkl
+This is the trained machine learning model. It was trained using the dataset. It analyzes input messages and predicts whether they contain signs of vishing. The model uses Arabic BERT embeddings to understand the meaning of the message.
+
+vishing_detector_api.ipynb
+This is the main Google Colab file. It allows users to interact with the system. It includes the following features:
+
+Starts a FastAPI server
+
+Accepts text input or audio recordings
+
+Uses the Whisper model to convert audio into Arabic text
+
+Analyzes the message using the trained model
+
+Returns the prediction and a confidence score
+
+The system detects the following types of suspicious behavior:
+
+Asking for passwords or codes
+
+Asking for verification code
+
+Using threats or fear
+
+Mentioning a bank card number
+
+Asking for bank account details
+
+Acting with unjustified urgency
+
+Asking for money transfer
+
+If none are detected, it is labeled as a normal call
+
+To use the project:
+
+Open the vishing_detector_api.ipynb file in Google Colab.
+
+Upload the vishing_classifier.pkl file to the left sidebar in Colab.
+
+Run all the cells in the notebook.
+
+After starting the server, ngrok will generate a public link.
+
+You can test the API manually or connect it to other tools like Lovable.
+
+The system has two main API endpoints:
+
+/analyze-text: Accepts a message in Arabic and returns predictions.
+
+/analyze-audio: Accepts a voice recording in Arabic, converts it to text, and returns predictions.
+
+Each response includes the original text, the prediction, and the confidence score.
+
+The technologies used include:
+
+FastAPI for building the API
+
+Whisper for speech-to-text
+
+SentenceTransformers for encoding the text
+
+Scikit-learn for the machine learning model
+
+pyngrok to publish the server online
+
+Google Colab to run the entire system
