@@ -1,16 +1,16 @@
-Vishing Detection Project - Nabaha
+# Vishing Detection Project - Nabaha
 
 This project is designed to detect vishing. The system was developed to raise awareness about fraud and show how artificial intelligence can be used in cybersecurity.
 
-The project consists of three main files:
+## The project consists of three main files:
 
-vishing_dataset.csv
+### vishing_dataset.csv
 This is a dataset containing Arabic call transcripts. Each row is labeled with features that indicate whether the message is suspicious. These features include things like asking for a password, creating urgency, or threatening the person. The dataset is used to train the machine learning model.
 
-vishing_classifier.pkl
+### vishing_classifier.pkl
 This is the trained machine learning model. It was trained using the dataset. It analyzes input messages and predicts whether they contain signs of vishing. The model uses Arabic BERT embeddings to understand the meaning of the message.
 
-vishing_detector_api.ipynb
+### vishing_detector_api.ipynb
 This is the main Google Colab file. It allows users to interact with the system. It includes the following features:
 
 Starts a FastAPI server
