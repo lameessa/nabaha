@@ -36,6 +36,20 @@ This is a Google Colab notebook that allows the system to be run online using a 
 
 This notebook allows anyone to interact with the model through a web API, making it easy to integrate with apps like Lovable or test it manually.
 
+### Integration with Lovable
+
+The frontend of the project is built with Lovable and is available at:
+https://preview--vishing-guard-scan.lovable.app/
+
+The GitHub repository for the frontend is:
+https://github.com/layanalnn/Nabaha-FrontEnd.git
+
+#### To connect the backend API with Lovable:
+- Make sure the notebook is running and the public ngrok URL is active.
+- Copy the link generated in the notebook (it ends with .ngrok-free.app/analyze-audio).
+- Update Lovable’s record button to send the audio to the /analyze-audio endpoint.
+- The audio should be sent as multipart/form-data with the field name file.
+
 ## How the system works
 
 1. The system records a phone call as an audio file.
