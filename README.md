@@ -1,11 +1,11 @@
 # Vishing Detection Project - Nabaha
 
-This project is designed to detect vishing. The goal of the system is to raise awareness about fraudulent phone calls and demonstrate how artificial intelligence can be applied in cybersecurity.
-The system takes in a spoken or written message and analyzes it to determine whether it is a legitimate call or a vishing attempt. The message is processed using natural language understanding tools and classified using a trained machine learning model.
+This project is designed to detect vishing. The goal of the system is to raise awareness about fraudulent phone calls.
+The system takes in a spoken message and analyzes it to determine whether it is a legitimate call or a vishing attempt. The message is processed using natural language understanding tools and classified using a trained machine learning model.
 
 ## The project consists of three main files
 ### vishing_dataset.csv
-This file contains a labeled dataset of Arabic phone call transcripts. Each row represents a single message or call transcript. The dataset includes features that indicate the presence of suspicious patterns, such as:
+This file contains a labeled dataset of Arabic phone call transcripts. The dataset includes features that indicate the presence of suspicious patterns, the features are:
 - Requesting a password or code
 - Asking for personal or banking information
 - Using threats or urgency
@@ -25,19 +25,19 @@ This is a Google Colab notebook that allows the system to be run online using a 
 - Starts a FastAPI web server to handle requests
 - Opens a public URL using ngrok for testing
 - Defines two API endpoints:
-  - /analyze-text: Accepts a plain Arabic text message and returns predicted labels and confidence
-  - /analyze-audio: Accepts an audio file, transcribes it using Whisper, then analyzes the result
+  - /analyze-text: Accepts a plain Arabic text message and returns predicted labels and confidence (used to test the model)
+  - /analyze-audio: Accepts an audio file, transcribes it using Whisper, then analyzes the result (used in the project frontend)
 
 This notebook allows anyone to interact with the model through a web API, making it easy to integrate with apps like Lovable or test it manually.
 
 ## How the system works
 
-1. A message is submitted to the system, either as audio or plain text.
-2. If it's audio, the Whisper model is used to transcribe the message to Arabic text.
+1. The system records a phone call as an audio file.
+2. The Whisper model is used to transcribe the audio message to Arabic text.
 3. The message is passed to the trained classifier.
 4. The message is encoded using BERT to extract semantic meaning.
 5. The classifier checks if the message contains any suspicious features and returns:
-   - A list of the detected labels (like request for password, threat, etc.)
+   - A list of the detected labels (only if vishing is detected)
    - A confidence score
 
 This output can be used to decide if the message is safe or potentially dangerous.
