@@ -1,16 +1,22 @@
 # Vishing Detection Project - Nabaha
 
-This project is designed to detect vishing. The goal of the system is to raise awareness about fraudulent phone calls.
-The system takes in a spoken message and analyzes it to determine whether it is a legitimate call or a vishing attempt. The message is processed using natural language understanding tools and classified using a trained machine learning model.
+This project is designed to detect vishing, which is a type of voice phishing where attackers attempt to extract sensitive information from victims through phone calls. 
+The system was built using artificial intelligence tools to raise awareness about fraud and demonstrate how modern AI can help detect these cyberattacks.
 
 ## The project consists of three main files
 ### vishing_dataset.csv
-This file contains a labeled dataset of Arabic phone call transcripts. The dataset includes features that indicate the presence of suspicious patterns, the features are:
-- Requesting a password or code
-- Asking for personal or banking information
-- Using threats or urgency
-- Offering fake deals or money transfers
-These labels help the model learn how vishing calls typically behave.
+This is a labeled dataset containing transcripts of Arabic phone calls. Each row represents a line of dialogue in a phone conversation, annotated with binary features (0 or 1) to indicate the presence of suspicious behavior. These features include:
+
+- is_urgent: whether the caller creates urgency or pressure
+- used_threat: whether the caller uses threats or intimidation
+- good_offers: whether the caller offers fake deals or unrealistic promises
+- request_money_transfer: whether the caller asks for a money transfer
+- request_personal_info: whether the caller asks for personal information (like ID)
+- request_banking_info: whether the caller asks for banking information
+- request_passwords: whether the caller asks for a password
+- request_code: whether the caller asks for a verification code
+- is_vishing: the label that indicates whether the line is part of a vishing attack
+
 ### vishing_classifier.pkl
 This is a machine learning model that was trained using the vishing_dataset.csv file. It takes in Arabic messages (text) and predicts whether certain suspicious features are present. The model uses sentence embeddings from an Arabic BERT model to understand the meaning of the message.
 
